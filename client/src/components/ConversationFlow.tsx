@@ -197,6 +197,7 @@ export default function ConversationFlow({
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
+
       {/* Suggested Responses */}
       {suggestedResponses.length > 0 && (
         <div className="py-4 space-y-2">

@@ -23,6 +23,71 @@ const summaryRequestSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // New chat endpoint with conversation history
+  app.post('/chat', async (req, res) => {
+    try {
+      const { user_id, message, goal_name = "their personal goal" } = req.body;
+      
+      if (!user_id || !message) {
+        return res.status(400).json({ error: 'user_id and message are required' });
+      }
+
+      // Load conversation history from Firebase
+      let conversationDoc;
+      try {
+        conversationDoc = await firestore.collection('conversations').doc(user_id).get();
+      } catch (error) {
+        console.error('Error loading conversation:', error);
+      }
+
+      const conversationHistory = conversationDoc?.exists ? conversationDoc.data()?.messages || [] : [];
+      
+      // Add user message to history
+      const newUserMessage = {
+        role: 'user',
+        content: message,
+        timestamp: new Date()
+      };
+      
+      conversationHistory.push(newUserMessage);
+
+      // Generate AI response based on conversation context
+      let reply = '';
+      const messageCount = conversationHistory.filter(m => m.role === 'user').length;
+      
+      if (messageCount === 1) {
+        reply = `I understand you're working on ${goal_name}. Tell me more about what specific challenges you're facing in this area.`;
+      } else if (messageCount === 2) {
+        reply = `That gives me good context. What would success look like for you in this situation? What's your ideal outcome?`;
+      } else if (messageCount === 3) {
+        reply = `I see. What has prevented you from achieving this goal so far? What obstacles have you encountered?`;
+      } else {
+        reply = `Based on our conversation, I think I have enough information to help create a personalized plan for you. Would you like me to start working on that?`;
+      }
+
+      // Add AI response to history
+      const aiMessage = {
+        role: 'assistant',
+        content: reply,
+        timestamp: new Date()
+      };
+      
+      conversationHistory.push(aiMessage);
+
+      // Save updated conversation to Firebase
+      await firestore.collection('conversations').doc(user_id).set({
+        messages: conversationHistory,
+        goal_name: goal_name,
+        last_updated: new Date()
+      });
+
+      res.json({ reply });
+    } catch (error) {
+      console.error('Chat error:', error);
+      res.status(500).json({ error: 'Failed to process chat message' });
+    }
+  });
+
   // Real-time conversation endpoint
   app.post('/api/conversation', async (req, res) => {
     try {

@@ -148,22 +148,27 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     setCurrentStep('conversation');
   };
   
-  // External API conversation mutation
+  // Chat API conversation mutation
   const conversationMutation = useMutation({
     mutationFn: async ({ messages, avatar }: { messages: Message[], avatar: Avatar }) => {
-      // Extract the latest user message as the goal_name
+      // Extract the latest user message
       const userMessages = messages.filter(m => m.role === 'user');
       const latestUserMessage = userMessages[userMessages.length - 1];
-      const goalName = latestUserMessage?.content || 'social skills improvement';
+      const messageContent = latestUserMessage?.content || '';
       
-      const response = await fetch('https://one23-u2ck.onrender.com/ask-questions', {
+      // Extract goal from the first user message or use a default
+      const firstUserMessage = userMessages[0];
+      const goalName = firstUserMessage?.content || 'social skills improvement';
+      
+      const response = await fetch('/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          goal_name: goalName,
-          user_id: 'anonymous_user'  // You can replace this with actual user ID if available
+          user_id: 'anonymous_user', // You can replace this with actual user ID if available
+          message: messageContent,
+          goal_name: goalName
         })
       });
       return await response.json();
@@ -171,20 +176,18 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     onSuccess: (response) => {
       console.log('API Response:', response); // Debug log
       
-      // Handle different response formats - the API returns { "questions": "..." }
+      // Handle the new API response format - returns { "reply": "..." }
       let messageContent = '';
       let shouldGeneratePlan = false;
       
-      if (response?.error) {
-        messageContent = "I had trouble processing that. Could you rephrase your social skills goal?";
-      } else if (response?.questions) {
-        messageContent = response.questions;
+      if (response?.reply) {
+        messageContent = response.reply;
         // Check if this looks like we have enough info to generate a plan
-        shouldGeneratePlan = messages.length >= 4; // After a few exchanges, suggest plan generation
-      } else if (typeof response === 'string') {
-        messageContent = response;
+        shouldGeneratePlan = messages.length >= 6; // After several exchanges, suggest plan generation
+      } else if (response?.error) {
+        messageContent = "I had trouble processing that. Could you tell me more about your goals?";
       } else {
-        messageContent = "I understand. Could you tell me more about your specific social skills goals?";
+        messageContent = "I understand. Could you tell me more about what you'd like to achieve?";
       }
       
       const aiMessage: Message = {
