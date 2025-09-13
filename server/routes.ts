@@ -40,7 +40,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Error loading conversation:', error);
       }
 
-      const conversationHistory = conversationDoc?.exists ? conversationDoc.data()?.messages || [] : [];
+      // Convert Firestore timestamps to regular dates for serialization
+      const conversationHistory = conversationDoc?.exists ? 
+        (conversationDoc.data()?.messages || []).map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp)
+        })) : [];
       
       // Add user message to history
       const newUserMessage = {
@@ -74,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       conversationHistory.push(aiMessage);
 
-      // Save updated conversation to Firebase
+      // Save updated conversation to Firebase (Firestore will handle the date conversion)
       await firestore.collection('conversations').doc(user_id).set({
         messages: conversationHistory,
         goal_name: goal_name,
@@ -84,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ reply });
     } catch (error) {
       console.error('Chat error:', error);
-      res.status(500).json({ error: 'Failed to process chat message' });
+      res.status(500).json({ error: `Unexpected error: ${error.message}` });
     }
   });
 
@@ -93,9 +98,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { messages, avatar } = req.body;
       
+      // Ensure timestamps are regular dates for Firestore storage
+      const normalizedMessages = messages.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp)
+      }));
+      
       // Store conversation in Firestore
       const conversationRef = await firestore.collection('conversations').add({
-        messages: messages,
+        messages: normalizedMessages,
         avatar: avatar,
         timestamp: new Date()
       });
@@ -132,7 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Conversation error:', error);
       res.status(500).json({ 
         success: false, 
-        error: 'Failed to process conversation' 
+        error: `Failed to process conversation: ${error.message}` 
       });
     }
   });
