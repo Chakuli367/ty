@@ -1,0 +1,741 @@
+<!-- ADD THIS BEFORE YOUR SCRIPT TAG IF NOT ALREADY PRESENT -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+
+
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+  "type": "service_account",
+  "project_id": "goalgrid-c5e9c",
+  "private_key_id": "a981b2c2a59416024831203bf657bb6f0a50a146",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCvk0vqo+BWp0nZ\nRITgyUsPGdYEVPjrDbEBZ25cv3YI3IseuEXbv+96rRtN7zp7pzVd8/KwRSI9luA9\nEv5FGo2tDkxoy8Dp71NTh3Gzi1XjDEcGrQ2NboJcluyRc18qy+jbArs3ESmB49cH\nOnmEi1h/AiIS9Ii2v8h+aOusQMnnEXfXKkZMVTP2gaMb6q1yQoJfQPYtO8xeFNBW\n7W9PiIdM9P2QUW1NolHN63mAVgtNZa/gcBE+svC/WheFnhoQDNqCcMaPHSXPz+xN\nglP1bRhJGrRjbFZw2HS3sH2tInHq40X3hCwcajONIjl7ZJslWiOtCXcc5aduJc1R\nx+eEo0LVAgMBAAECggEAFg4aPLzeOvRjvfOx/2y5zYlQzZWA+UHsiMEd52+zm5Rc\ns3yxZdPb+NyS7/zLq2nLNeSliUf975+qxnFC2JpnzqPbrFRgBOLn5DfA7C1mGhHa\nQDfv2mLV5FyfFfxYqY8Yzp4ut1GkFalxwvow9pnsgXPapOfr3o0D2gFDDY3L7wcY\nSggnLrOg9OKAnMbGiMr942a12bV2nY9VtiXYdyNrYWCErbEyM0MYMzZibNM5pvlo\niRtiU/XilLMr1Va7dkvOe6pefqS2CPsczOeOHhIBSGesFrBvQa8h/3N/DGkYHi9L\nZ9zUi5/FXQ+eYmBvlXgSi/WAV8NpK+u4b5BYDzVw9wKBgQD4MUddPh/zJBKmnV8C\nOCnW3u2qm9GUgudKhSs2MHfAtS6s0cQXlJ+a7oCReIXlwUAofTI52va4uLnSYafd\niinsiM76KWSemsqLo5agcVpULmCAsOmFBpmj+xF2nkrGAL2TE2pYGrixo6maRPDf\nzUzrkwPb9l8UUNak8sABfoJWiwKBgQC1GTll4WN9ChzYeeZx2ingRmPUoJh+sVbf\nUKEyBC+3SMcbTIKsFA0h/WRLTIADJhY2sT/BfLLrdtg6DemeFi4oh78eAlSsKLfE\no0FLA1S5zH2UeSM+zthg7XVD6pBx1WygZj85abdSpqFcF3Br2Ww7uS/HXHRKxjZB\nCYncjbFYHwKBgQDy20V5d9DLmgCmCFdvVIWcO4dT6iSprW2k/anK3KJRbvi9IoU+\nja+fasFjlwtuRisBc4AyHJBPMHKj6erYXNmpGjVtlBNhHxYSjYBWfpRkyvyi8HmQ\nMWUlkAcGit2f4hmeUOE+VOdk60CKM+t/EuSxnqmoEuv2dSOTQ/WdgK0JAQKBgCFe\noIDxYw+rSV1qONhJxuWYktSfMvpFWyiTBuDcfJ5dPrL9CicDGthkhJKLahsqbXVu\ne7z/aUiSAY3Q+ncyxxaYzNKOw2NlrVcCbgmQd5A06f7tw1zTaHOTzcPR+QPAu99i\nd8vweuMz6Q+7EfANhDANE4y8sIEGvQCG7WxCf6cpAoGBAKN5oFpmBt3gBDbtGLxX\n4NX/yQu3LfaIVDyqBEpoW4JZgh2o2JBOz5uOh3mchAskDyhO/Pb/SyqHkZu0RQtg\nG55aych4EhBji2lB7eaUfsSsSTu0h7nQkNeh+GVOixfY4cS8M2M9erWtFebCaru7\nOfTcUxGgNTxZl3tYYZAag6JY\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@goalgrid-c5e9c.iam.gserviceaccount.com",
+  "client_id": "109716953349619795826",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40goalgrid-c5e9c.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+};
+
+
+  firebase.initializeApp(firebaseConfig);
+</script>
+
+<!-- GOOGLE LOGIN POPUP -->
+<div id="googleLoginPopup" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.7); z-index:999999; justify-content:center; align-items:center;">
+  <div style="background:white; padding:40px; border-radius:12px; text-align:center; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+    <h2 style="margin-bottom:20px; color:#333;">Login with Google to continue</h2>
+    <button id="googleLoginBtn" style="background:#4285F4; color:white; padding:12px 24px; border:none; border-radius:6px; font-size:16px; cursor:pointer;">
+      Sign in with Google
+    </button>
+  </div>
+</div>
+
+<script>
+  const loginPopup = document.getElementById("googleLoginPopup");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+
+  function showLoginPopupIfNeeded(callback) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        loginPopup.style.display = "flex";
+        googleLoginBtn.onclick = async () => {
+          const provider = new firebase.auth.GoogleAuthProvider();
+          try {
+            await firebase.auth().signInWithPopup(provider);
+            loginPopup.style.display = "none";
+            callback(); // continue app init
+          } catch (err) {
+            alert("Login failed. Please try again.");
+            console.error(err);
+          }
+        };
+      } else {
+        loginPopup.style.display = "none";
+        callback(); // already logged in
+      }
+    });
+  }
+</script>
+
+
+
+<script> 
+(() => {
+  const apiBase = "https://one23-u2ck.onrender.com"; // Your AI backend URL
+  let goalName = "";
+  let questionsArray = [];
+  let currentQuestionIndex = 0;
+  let selectedAvatar = "";
+
+  // Create overlay container & style
+  const overlay = document.createElement("div");
+  overlay.id = "goalPlannerOverlay";
+  overlay.style.position = "fixed";
+  overlay.style.top = "0";
+  overlay.style.left = "0";
+  overlay.style.width = "100vw";
+  overlay.style.height = "100vh";
+  // Responsive background image + fallback white background
+let bgImgUrl = "https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/blob-scene-haikei.svg";
+
+if (window.innerWidth <= 480) {
+  bgImgUrl = "https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/blob-scene-haikei-1_MOBILE.svg";
+} else if (window.innerWidth <= 991) {
+  bgImgUrl = "https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/blob-scene-haikei-1_TABLET.svg";
+} else if (window.innerWidth >= 1200) {
+  bgImgUrl = "https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/blob-scene-haikei-1_DEKSTOP-LARGE.svg";
+}
+
+overlay.style.background = `#fff url(${bgImgUrl}) center/cover no-repeat`;
+
+  overlay.style.zIndex = "2147483647";
+  overlay.style.display = "flex";
+  overlay.style.justifyContent = "center";
+  overlay.style.alignItems = "center";
+  overlay.style.overflow = "auto";
+
+  // **Overlay visible immediately, no slide-in**
+  overlay.style.opacity = "1";
+  overlay.style.transform = "none";
+  overlay.style.transition = "none";
+
+  // Add bubbles animation canvas on overlay
+  const bubbleCanvas = document.createElement("canvas");
+  bubbleCanvas.style.position = "fixed";
+  bubbleCanvas.style.top = "0";
+  bubbleCanvas.style.left = "0";
+  bubbleCanvas.style.width = "100%";
+  bubbleCanvas.style.height = "100%";
+  bubbleCanvas.style.pointerEvents = "none";
+  bubbleCanvas.style.zIndex = "2147483646"; // just below overlay content
+  overlay.appendChild(bubbleCanvas);
+
+  document.body.appendChild(overlay);
+  document.body.style.overflow = "hidden";
+
+  const container = document.createElement("div");
+  container.id = "goal-planner";
+  container.style.background = "#fff";
+  container.style.borderRadius = "20px";
+  container.style.padding = "40px";
+  container.style.width = "1000px";
+  container.style.maxWidth = "95vw";
+  container.style.maxHeight = "95vh";
+  container.style.boxShadow = "0 20px 50px rgba(0,0,0,0.2)";
+  container.style.fontFamily = "Arial, sans-serif";
+  container.style.overflowY = "auto";
+  container.style.boxSizing = "border-box";
+  container.style.position = "relative";
+  container.style.zIndex = "2147483647"; // above bubbles
+
+  container.innerHTML = `
+    <style>
+     .book-3d-final {
+  perspective: 1500px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 80px;
+}
+
+.book {
+  position: relative;
+  width: 200px;
+  height: 300px;
+  transform-style: preserve-3d;
+  transform: rotateY(-20deg) rotateX(10deg);
+  transition: transform 1s ease, box-shadow 1s ease;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+}
+
+.cover {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: url("https://politicalscienceblog.com/wp-content/uploads/2023/05/How-to-Win-Friends-and-Influence-People-768x1186.jpg");
+  background-size: cover;
+  background-position: center;
+  border: 1px solid #333;
+  border-radius: 4px;
+  backface-visibility: hidden;
+}
+
+.spine {
+  position: absolute;
+  left: -12px;
+  width: 12px;
+  height: 100%;
+  background: #c2b280;
+  transform: rotateY(90deg);
+  transform-origin: left center;
+  border-radius: 3px 0 0 3px;
+}
+
+.pages {
+  position: absolute;
+  right: -6px;
+  width: 6px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    to bottom,
+    #f7f7f7,
+    #eaeaea 2px,
+    #f7f7f7 4px
+  );
+  transform: rotateY(-90deg);
+  transform-origin: right center;
+  border-radius: 0 3px 3px 0;
+}
+
+.book:hover {
+  transform: rotateY(0deg) rotateX(0deg) scale(1.05);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.4);
+}
+
+.avatar-card {
+  width: 280px;
+  height: 360px;
+  border-radius: 50% / 70%;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 20px;
+  box-shadow: 0 0 30px 10px rgba(0, 0, 0, 0.1);
+  border: 4px solid #a9a0d9;
+  outline: 2px solid white;
+  outline-offset: -2px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.avatar-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 40px 15px rgba(0, 0, 0, 0.2);
+}
+.avatar-wrapper {
+  cursor: pointer;
+  text-align: center;
+  user-select: none;
+}
+.avatar-wrapper.selected .avatar-card {
+  border-color: #4a90e2 !important;
+  box-shadow: 0 0 40px 15px rgba(74, 144, 226, 0.7) !important;
+  transform: scale(1.1);
+}
+.avatar-emoji {
+  font-size: 40px;
+}
+.avatar-name {
+  font-size: 28px;
+  font-weight: 900;
+  color: #1e1e4f;
+}
+.avatar-subtitle {
+  font-size: 20px;
+  font-style: italic;
+  color: #4b4b89;
+  margin-bottom: 10px;
+}
+.avatar-description {
+  font-size: 16px;
+  color: #555;
+  max-width: 260px;
+  margin: 0 auto 20px auto;
+  font-style: normal;
+  line-height: 1.3;
+}
+#selectedAvatarText {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2a2a5e;
+  margin-bottom: 20px;
+  min-height: 2rem;
+}
+#nextAvatarBtn {
+  background: #4a90e2;
+  color: white;
+  padding: 0.75rem 2rem;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  max-width: 300px;
+}
+/* Form heading for LET’S DEFINE YOUR GOAL */
+#step1 h2 {
+  font-size: 2.5rem;
+  color: #2a2a5e;
+  font-weight: 900;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* 🔻 Mobile responsiveness 🔻 */
+@media (max-width: 600px) {
+  .book-3d-final {
+    padding: 30px 10px;
+    transform: scale(0.8);
+  }
+
+  .book {
+    width: 150px;
+    height: 220px;
+  }
+
+  .avatar-card {
+    width: 220px;
+    height: 280px;
+  }
+
+  .avatar-name {
+    font-size: 1.6rem;
+  }
+
+  .avatar-subtitle {
+    font-size: 1rem;
+  }
+
+  .avatar-description {
+    font-size: 0.9rem;
+  }
+
+  #step1 h2 {
+    font-size: 2rem;
+  }
+
+  #nextAvatarBtn {
+    font-size: 1rem;
+    padding: 0.6rem 1.2rem;
+  }
+
+  #selectedAvatarText {
+    font-size: 1.2rem;
+  }
+}
+
+#trailerText {
+    font-size: 3.5rem;          /* BIG */
+    font-weight: 900;           /* BOLD */
+    text-align: center;
+    color: #000000;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    line-height: 1.4;
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.9),
+                 0 0 30px rgba(0, 200, 255, 0.7),
+                 0 0 45px rgba(0, 150, 255, 0.6);
+    animation: pulseGlow 2s infinite alternate;
+    max-width: 90%;
+    transition: opacity 1s ease-out;
+  }
+
+  .fade-out {
+    opacity: 0;
+  }
+
+  @keyframes pulseGlow {
+    0% {
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.9),
+                   0 0 30px rgba(0, 200, 255, 0.7),
+                   0 0 45px rgba(0, 150, 255, 0.6);
+    }
+    100% {
+      text-shadow: 0 0 25px rgba(255, 255, 255, 1),
+                   0 0 50px rgba(0, 200, 255, 1),
+                   0 0 70px rgba(0, 150, 255, 0.9);
+    }
+  }
+
+    </style>
+
+<div id="goalPlannerOverlay">
+    <!-- Trailer typing text -->
+    
+
+     <div class="book-3d-final">
+  <div class="book">
+    <div class="cover"></div>
+    <div class="spine"></div>
+    <div class="pages"></div>
+    <div class="book-heading">
+  How to Win Friends<br>& Influence People
+</div>
+
+  </div>
+</div>
+
+
+
+    <div id="avatarSection">
+     <div id="trailerText"></div>
+      <div style="text-align: center; margin-bottom: 40px;">
+        <h2 style="font-size: 3rem; color: #2a2a5e; font-weight: 900;">CHOOSE YOUR AVATAR</h2>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 60px; flex-wrap: wrap; margin-bottom: 40px;">
+        <div class="avatar-wrapper" data-avatar="Skyler">
+          <div class="avatar-card" style="background-image: url('https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/bird4_sunset.svg'); box-shadow: 0 0 30px 10px rgba(0, 128, 255, 0.5);"></div>
+          <div class="avatar-emoji">🦅</div>
+          <div class="avatar-name">Skyler</div>
+          <div class="avatar-subtitle">The Visionary</div>
+          <div class="avatar-description">Skyler sees the big picture and inspires others with their clarity and focus on the future.</div>
+        </div>
+
+        <div class="avatar-wrapper" data-avatar="Raven">
+          <div class="avatar-card" style="background-image: url('https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/bird3_candy.svg'); box-shadow: 0 0 30px 10px rgba(255, 105, 180, 0.5);"></div>
+          <div class="avatar-emoji">🦉</div>
+          <div class="avatar-name">Raven</div>
+          <div class="avatar-subtitle">The Thinker</div>
+          <div class="avatar-description">Raven is analytical and thoughtful, always diving deep to understand challenges thoroughly.</div>
+        </div>
+
+        <div class="avatar-wrapper" data-avatar="Phoenix">
+          <div class="avatar-card" style="background-image: url('https://goalgrid.wpcomstaging.com/wp-content/uploads/2025/06/bird2_cyber.svg'); box-shadow: 0 0 30px 10px rgba(255, 0, 0, 0.5);"></div>
+          <div class="avatar-emoji">🔥</div>
+          <div class="avatar-name">Phoenix</div>
+          <div class="avatar-subtitle">The Resilient</div>
+          <div class="avatar-description">Phoenix rises from challenges stronger than before, embodying perseverance and strength.</div>
+        </div>
+      </div>
+
+      <div style="text-align: center;">
+        <div id="selectedAvatarText"></div>
+        <button id="nextAvatarBtn">Next →</button>
+      </div>
+    </div>
+
+    <div id="step1" style="display:none;">
+      <h2>LET’S DEFINE YOUR GOAL</h2>
+      <label for="goalInput">What's your goal?</label>
+      <input type="text" id="goalInput" placeholder="e.g. Build confidence" style="width:100%;padding:10px;margin-top:10px;" />
+      <button id="nextToQuestions" style="margin-top:15px;background:#4a90e2;color:#fff;padding:10px;border:none;width:100%;">Next →</button>
+    </div>
+
+    <div id="step2" style="display:none;">
+      <h3>Answer These Questions:</h3>
+      <form id="questionsForm"></form>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+        <div id="progressBarContainer" style="flex-grow:1; height:8px; background:#ddd; border-radius:4px; margin-right:10px;">
+          <div id="progressBar" style="width:0%; height:100%; background:#4a90e2; border-radius:4px; transition: width 0.4s ease;"></div>
+        </div>
+        <button id="submitAnswersBtn" style="background:#4a90e2;color:#fff;padding:10px;border:none;min-width:140px; display:none;">Generate Plan →</button>
+      </div>
+      <button id="nextQuestionBtn" type="button" style="margin-top:15px;background:#6c757d;color:#fff;padding:10px;border:none;width:100%;">Next Question →</button>
+    </div>
+
+    <div id="step3" style="display:none;">
+  <h3>Your Personalized Plan</h3>
+  <div id="planOutput"></div>
+  <textarea id="planHtmlExport" style="width:100%;height:200px;margin-top:20px;display:block;" readonly></textarea>
+  <button id="showVisionBtn" style="margin-top:15px;background:#4a90e2;color:#fff;padding:10px;border:none;width:100%;">See Your Vision</button>
+  <p style="font-size: 0.9em; color: #555;">This plan is saved on your device only. Come back anytime on this browser to view it.</p>
+  <div id="summaryOutput" style="margin-top:20px;"></div>
+</div>
+
+  `;
+
+  overlay.appendChild(container);
+
+  // Avatar selection logic
+  const avatarWrappers = container.querySelectorAll(".avatar-wrapper");
+  const selectedAvatarText = container.querySelector("#selectedAvatarText");
+  const nextAvatarBtn = container.querySelector("#nextAvatarBtn");
+
+  avatarWrappers.forEach(wrapper => {
+    wrapper.addEventListener("click", () => {
+      selectedAvatar = wrapper.dataset.avatar;
+      avatarWrappers.forEach(w => w.classList.remove("selected"));
+      wrapper.classList.add("selected");
+      selectedAvatarText.textContent = `Selected Avatar: ${selectedAvatar}`;
+    });
+  });
+
+  nextAvatarBtn.onclick = () => {
+    if (!selectedAvatar) {
+      alert("Please select an avatar first.");
+      return;
+    }
+    // Hide avatar section and show goal input step
+    container.querySelector("#avatarSection").style.display = "none";
+    container.querySelector("#step1").style.display = "block";
+    goalInput.focus();
+  };
+
+  const step1 = container.querySelector("#step1");
+  const step2 = container.querySelector("#step2");
+  const step3 = container.querySelector("#step3");
+  const goalInput = container.querySelector("#goalInput");
+  const nextToQuestionsBtn = container.querySelector("#nextToQuestions");
+  const questionsForm = container.querySelector("#questionsForm");
+  const nextQuestionBtn = container.querySelector("#nextQuestionBtn");
+  const submitAnswersBtn = container.querySelector("#submitAnswersBtn");
+  const progressBar = container.querySelector("#progressBar");
+  const planOutput = container.querySelector("#planOutput");
+  const planHtmlExport = container.querySelector("#planHtmlExport");
+
+  nextToQuestionsBtn.onclick = async () => {
+    goalName = goalInput.value.trim();
+    if (!goalName) return alert("Please enter a goal.");
+
+    try {
+      const res = await fetch(`https://one23-u2ck.onrender.com/ask-questions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ goal_name: goalName })
+      });
+      const data = await res.json();
+      if (data.error) return alert(data.error);
+
+      questionsArray = data.questions.split("\n").filter(q => q.trim());
+      currentQuestionIndex = 1;
+      showCurrentQuestion();
+
+      step1.style.display = "none";
+      step2.style.display = "block";
+    } catch (e) {
+      alert("Error fetching questions.");
+      console.error(e);
+    }
+  };
+
+  function showCurrentQuestion() {
+    questionsForm.innerHTML = "";
+    if (currentQuestionIndex >= questionsArray.length) {
+      submitAnswersBtn.style.display = "inline-block";
+      nextQuestionBtn.style.display = "none";
+      return;
+    } else {
+      submitAnswersBtn.style.display = "none";
+      nextQuestionBtn.style.display = "inline-block";
+    }
+    const q = questionsArray[currentQuestionIndex];
+    const block = document.createElement("div");
+    block.style.opacity = "0";
+    block.style.transform = "translateY(20px)";
+    block.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+    block.innerHTML = `
+      <label style="font-weight:bold;">${q}</label>
+      <textarea required style="width:100%;padding:10px;margin:10px 0;" name="answer${currentQuestionIndex}"></textarea>
+    `;
+    questionsForm.appendChild(block);
+    requestAnimationFrame(() => {
+      block.style.opacity = "1";
+      block.style.transform = "translateY(0)";
+    });
+    updateProgressBar();
+  }
+
+  nextQuestionBtn.onclick = () => {
+    const textarea = questionsForm.querySelector("textarea");
+    if (!textarea.value.trim()) return alert("Please answer the question before proceeding.");
+    currentQuestionIndex++;
+    showCurrentQuestion();
+  };
+
+  submitAnswersBtn.onclick = async () => {
+  const answers = [];
+  const textareas = questionsForm.querySelectorAll("textarea");
+  for (const ta of textareas) {
+    const val = ta.value.trim();
+    if (!val) return alert("Please answer all questions.");
+    answers.push(val);
+  }
+
+  try {
+    const res = await fetch(`${apiBase}/final-plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        goal_name: goalName,
+        user_answers: answers,
+        avatar: selectedAvatar,
+      }),
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      planOutput.innerHTML = `<p style="color: red;">❌ ${data.error}</p><pre>${data.raw_response || ""}</pre>`;
+      planHtmlExport.value = "";
+      return;
+    }
+
+    const plan = Array.isArray(data.plan) ? data.plan : [];
+    const html = plan.map(day => `
+      <div style="background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px;">
+        <h3 style="color: #4a90e2;">${selectedAvatar} ${day.day} — ${day.title}</h3>
+        <p><strong>Summary:</strong> ${day.summary}</p>
+        <p><strong>Task:</strong> ${day.task}</p>
+        <p><strong>Motivation:</strong> ${day.motivation}</p>
+        <p><strong>Hack of the day:</strong> ${day.secret_hacks_and_shortcuts}</p>
+        <p><strong>Visuals of the day:</strong> ${day.visual_infographic_html}</p>
+        <blockquote style="margin: 10px 0; padding-left: 15px; border-left: 4px solid #ccc; font-style: italic;">${day.book_quote}</blockquote>
+      </div>
+    `).join('');
+
+    planOutput.innerHTML = html;
+    planHtmlExport.value = html;
+
+    // Save to localStorage
+    localStorage.setItem('goalplanner_saved_plan', html);
+
+    // Save to Firestore if logged in
+    const user = firebase.auth().currentUser;
+    if (user) {
+      const db = firebase.firestore();
+      await db.collection("Plans").doc(user.uid).set({
+        plan_html: html,
+        generated_at: new Date(),
+        avatar: selectedAvatar,
+        goal: goalName,
+
+      });
+
+
+      console.log("📥 Plan saved in Firebase under Plans/" + user.uid);
+    } else {
+      console.warn("⚠️ User not logged in. Plan not saved to Firestore.");
+    }
+
+    step2.style.display = "none";
+    window.location.href = "https://goalgrid.wpcomstaging.com/lesson/lessonspage/";
+   
+
+  } catch (e) {
+    alert("Error generating plan.");
+    console.error(e);
+  }
+};
+
+
+  function updateProgressBar() {
+    const total = questionsArray.length - 1;
+    const progress = currentQuestionIndex - 1;
+    const percent = (progress / total) * 100;
+    progressBar.style.width = percent + "%";
+  }
+
+  // Bubble animation
+  const ctx = bubbleCanvas.getContext("2d");
+  let width, height;
+  let bubbles = [];
+  const bubbleCount = 150; // increased intensity
+
+  class Bubble {
+    constructor() {
+      this.reset();
+    }
+    reset() {
+      this.x = Math.random() * width;
+      this.y = height + Math.random() * 100;
+      this.radius = 3 + Math.random() * 4;
+      this.speed = 0.8 + Math.random() * 1.2; // increased speed but moderate
+      this.opacity = 0.2 + Math.random() * 0.4;
+      this.wind = (Math.random() - 0.5) * 0.3;
+    }
+    update() {
+      this.y -= this.speed;
+      this.x += this.wind;
+      this.opacity -= 0.002;
+      if (this.opacity <= 0 || this.y + this.radius < 0) {
+        this.reset();
+        this.opacity = 0.4 + Math.random() * 0.5;
+        this.y = height + this.radius;
+      }
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(135,206,235,${this.opacity})`; // skyblue color
+      ctx.fill();
+    }
+  }
+
+  function initBubbles() {
+    width = bubbleCanvas.width = window.innerWidth;
+    height = bubbleCanvas.height = window.innerHeight;
+    bubbles = [];
+    for (let i = 0; i < bubbleCount; i++) {
+      bubbles.push(new Bubble());
+    }
+  }
+
+  function animateBubbles() {
+    ctx.clearRect(0, 0, width, height);
+    for (const b of bubbles) {
+      b.update();
+      b.draw();
+    }
+    requestAnimationFrame(animateBubbles);
+  }
+
+  window.addEventListener("resize", () => {
+    initBubbles();
+  });
+
+  initBubbles();
+  animateBubbles();
+
+
+  const showVisionBtn = container.querySelector("#showVisionBtn");
+const summaryOutput = container.querySelector("#summaryOutput");
+
+showVisionBtn.onclick = async () => {
+  const user = firebase.auth().currentUser;
+  const userId = user ? user.uid : "anonymous"; // fallback if not logged in
+
+  try {
+    const res = await fetch(`${apiBase}/achievement-summary`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        plan: planHtmlExport.value
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) return alert(data.error);
+
+    summaryOutput.innerHTML = `
+      <div style="padding: 15px; background: #f0f8ff; border-left: 4px solid #4a90e2; font-size: 1.1em; margin-bottom: 20px;">
+        <strong>🌟 Your Vision:</strong><br>${data.summary}
+      </div>`;
+  } catch (e) {
+    alert("Failed to fetch your vision summary.");
+    console.error(e);
+  }
+};
+
+
+
+})();
+
+
+const trailerText = document.getElementById("trailerText");
+  const avatarSelection = document.getElementById("avatarSelection");
+
+  const message = "Now you have signed up...\nLet's create your plan!";
+  let index = 0;
+
+  function typeWriter() {
+    if (index < message.length) {
+      trailerText.textContent += message.charAt(index);
+      index++;
+      setTimeout(typeWriter, 80);
+    } else {
+      // After typing is finished, fade out
+      setTimeout(() => {
+        trailerText.classList.add("fade-out");
+        setTimeout(() => {
+          trailerText.style.display = "none";
+          avatarSelection.style.display = "flex";
+        }, 1000); // wait for fade-out animation to complete
+      }, 1000); // 1s pause before fading
+    }
+  }
+
+  window.onload = typeWriter;
+</script>
