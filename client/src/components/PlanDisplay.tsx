@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,9 +32,10 @@ export default function PlanDisplay({ userId, onPlanUpdate }: PlanDisplayProps) 
   const fetchPlan = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/plan/${userId}`);
+      // Updated to use the external backend URL
+      const response = await fetch(`https://one23-u2ck.onrender.com/api/plan/${userId}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setPlanData(result.data);
       } else {
@@ -54,15 +54,15 @@ export default function PlanDisplay({ userId, onPlanUpdate }: PlanDisplayProps) 
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
     const dayDivs = doc.querySelectorAll('div[style*="background: #fff"]');
-    
+
     const days: { [key: string]: string } = {};
-    
+
     dayDivs.forEach((div, index) => {
       if (index < 5) { // Ensure only 5 days
         days[(index + 1).toString()] = div.outerHTML;
       }
     });
-    
+
     return days;
   };
 
@@ -152,7 +152,7 @@ export default function PlanDisplay({ userId, onPlanUpdate }: PlanDisplayProps) 
             {Object.entries(dayContent).map(([day, content]) => (
               <TabsContent key={day} value={day} className="mt-6">
                 <ScrollArea className="max-h-[600px]">
-                  <div 
+                  <div
                     className="prose prose-sm max-w-none"
                     dangerouslySetInnerHTML={{ __html: content }}
                     style={{
@@ -161,17 +161,17 @@ export default function PlanDisplay({ userId, onPlanUpdate }: PlanDisplayProps) 
                     } as React.CSSProperties}
                   />
                 </ScrollArea>
-                
+
                 <div className="flex items-center justify-between mt-6 pt-4 border-t">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Clock className="w-4 h-4" />
                     Day {day} of 5
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     {parseInt(day) > 1 && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setActiveDay((parseInt(day) - 1).toString())}
                       >
@@ -179,7 +179,7 @@ export default function PlanDisplay({ userId, onPlanUpdate }: PlanDisplayProps) 
                       </Button>
                     )}
                     {parseInt(day) < 5 && (
-                      <Button 
+                      <Button
                         size="sm"
                         onClick={() => setActiveDay((parseInt(day) + 1).toString())}
                       >

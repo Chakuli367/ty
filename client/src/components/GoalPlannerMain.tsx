@@ -161,7 +161,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       const firstUserMessage = userMessages[0];
       const goalName = firstUserMessage?.content || 'social skills improvement';
       
-      const response = await fetch('/chat', {
+      const response = await fetch('https://one23-u2ck.onrender.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       // Get the goal name from the first user message or use a default
       const goalName = userAnswers[0] || 'social skills improvement';
       
-      const response = await fetch('/final-plan', {
+      const response = await fetch('https://one23-u2ck.onrender.com/final-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,7 +262,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
         // Save plan to Firestore under plans/{user.uid}/plan
         try {
           const userId = 'user123'; // Replace with actual user ID from auth
-          const response = await fetch('/api/save-plan', {
+          const response = await fetch('https://one23-u2ck.onrender.com/api/save-plan', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
