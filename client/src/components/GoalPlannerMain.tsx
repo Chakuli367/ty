@@ -161,17 +161,40 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       return await response.json();
     },
     onSuccess: (response) => {
+      console.log('API Response:', response); // Debug log
+      
+      // Handle different response formats
+      let messageContent = '';
+      let shouldGeneratePlan = false;
+      
+      if (typeof response === 'string') {
+        messageContent = response;
+      } else if (response?.message) {
+        messageContent = response.message;
+        shouldGeneratePlan = response.generatePlan || false;
+      } else if (response?.data?.message) {
+        messageContent = response.data.message;
+        shouldGeneratePlan = response.data.generatePlan || false;
+      } else if (response?.answer) {
+        messageContent = response.answer;
+        shouldGeneratePlan = response.generatePlan || false;
+      } else if (response?.questions) {
+        messageContent = response.questions;
+      } else {
+        messageContent = "I understand. Could you tell me more about your specific goals?";
+      }
+      
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.message || response.data?.message || response.answer,
+        content: messageContent,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, aiMessage]);
       setIsLoading(false);
       
-      if (response.generatePlan || response.data?.generatePlan) {
+      if (shouldGeneratePlan) {
         // Start plan generation
         setTimeout(() => {
           setCurrentStep('plan');
@@ -186,7 +209,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I'm experiencing some technical difficulties, but I'm still here to help! Could you please rephrase your message?",
+        content: "I'm having trouble connecting to my AI brain right now. Let me try a different approach - what specific social skill challenge would you like to work on?",
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -211,8 +234,24 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       return await response.json();
     },
     onSuccess: (response) => {
-      // Replace mockPlan with the real generated plan
-      setGeneratedPlan(response.plan || response.data?.plan || response.data);
+      console.log('Plan API Response:', response); // Debug log
+      
+      // Try to extract plan from different response formats
+      let plan = null;
+      if (response?.plan) {
+        plan = response.plan;
+      } else if (response?.data?.plan) {
+        plan = response.data.plan;
+      } else if (response?.data) {
+        plan = response.data;
+      }
+      
+      if (plan) {
+        setGeneratedPlan(plan);
+      } else {
+        console.log('Using fallback mock plan');
+        // Use mock plan as fallback
+      }
       setIsGeneratingPlan(false);
     },
     onError: (error) => {
