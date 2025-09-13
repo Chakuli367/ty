@@ -225,16 +225,23 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
   // External API plan generation mutation
   const planMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch('https://one23-u2ck.onrender.com/ask-questions', {
+      // Extract user answers from the conversation messages
+      const userAnswers = messages
+        .filter(m => m.role === 'user')
+        .map(m => m.content);
+      
+      // Get the goal name from the first user message or use a default
+      const goalName = userAnswers[0] || 'social skills improvement';
+      
+      const response = await fetch('/final-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          messages, 
-          avatar: selectedAvatar,
-          goalText: messages.find(m => m.role === 'user')?.content || '',
-          generatePlan: true
+          goal_name: goalName,
+          user_answers: userAnswers,
+          avatar: selectedAvatar
         })
       });
       return await response.json();
@@ -242,14 +249,12 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     onSuccess: (response) => {
       console.log('Plan API Response:', response); // Debug log
       
-      // Try to extract plan from different response formats
+      // Handle the API response format
       let plan = null;
-      if (response?.plan) {
+      if (response?.success && response?.plan) {
         plan = response.plan;
-      } else if (response?.data?.plan) {
-        plan = response.data.plan;
-      } else if (response?.data) {
-        plan = response.data;
+      } else if (response?.plan) {
+        plan = response.plan;
       }
       
       if (plan) {
