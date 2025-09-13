@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X } from 'lucide-react';
@@ -73,6 +75,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
   const [showTrailerText, setShowTrailerText] = useState(true);
   const [trailerText, setTrailerText] = useState('');
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
+  const [generatedPlan, setGeneratedPlan] = useState<Plan | null>(null);
   
   const fullTrailerText = "TRANSFORM YOUR SOCIAL SKILLS WITH AI COACHING";
   
@@ -145,6 +148,65 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     setCurrentStep('conversation');
   };
   
+  // Real GROQ conversation mutation
+  const conversationMutation = useMutation({
+    mutationFn: async ({ messages, avatar }: { messages: Message[], avatar: Avatar }) => {
+      const response = await apiRequest('POST', '/api/conversation', { messages, avatar });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response.data.message,
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+      
+      if (response.data.generatePlan) {
+        // Start plan generation
+        setTimeout(() => {
+          setCurrentStep('plan');
+          setIsGeneratingPlan(true);
+          planMutation.mutate();
+        }, 2000);
+      }
+    },
+    onError: () => {
+      setIsLoading(false);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "I'm experiencing some technical difficulties, but I'm still here to help! Could you please rephrase your message?",
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
+  });
+
+  // Real GROQ plan generation mutation
+  const planMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/generate-plan', { 
+        messages, 
+        avatar: selectedAvatar,
+        goalText: messages.find(m => m.role === 'user')?.content || ''
+      });
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      // Replace mockPlan with the real generated plan
+      setGeneratedPlan(response.data);
+      setIsGeneratingPlan(false);
+    },
+    onError: () => {
+      setIsGeneratingPlan(false);
+      // Keep the mock plan as fallback
+    }
+  });
+
   const handleSendMessage = (content: string) => {
     if (!selectedAvatar) return;
     
@@ -158,81 +220,13 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
     
-    // Simulate AI processing
-    setTimeout(() => {
-      const responses = getAIResponse(content, selectedAvatar, messages.length);
-      
-      if (responses.generatePlan) {
-        // Transition to plan generation
-        const finalMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: responses.message,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, finalMessage]);
-        setIsLoading(false);
-        
-        // Start plan generation
-        setTimeout(() => {
-          setCurrentStep('plan');
-          setIsGeneratingPlan(true);
-          
-          // Simulate plan generation
-          setTimeout(() => {
-            setIsGeneratingPlan(false);
-          }, 3000);
-        }, 2000);
-      } else {
-        const aiMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: responses.message,
-          timestamp: new Date()
-        };
-        
-        setMessages(prev => [...prev, aiMessage]);
-        setIsLoading(false);
-      }
-    }, 1500);
+    // Call real GROQ API
+    conversationMutation.mutate({
+      messages: [...messages, userMessage],
+      avatar: selectedAvatar
+    });
   };
   
-  const getAIResponse = (userMessage: string, avatar: Avatar, messageCount: number) => {
-    // Simulate intelligent conversation flow
-    if (messageCount >= 6) {
-      return {
-        message: "Perfect! I have everything I need to create your personalized social skills plan. Based on our conversation, I'll craft a step-by-step journey that's tailored specifically to your goals and current situation. Let me generate that for you now...",
-        generatePlan: true
-      };
-    }
-    
-    const responses = {
-      Skyler: [
-        "I love your vision! Let me understand the bigger picture. When you imagine yourself successfully networking, what does that ideal scenario look like? Paint me a picture of your future confident self.",
-        "That's a powerful goal! Now, let's think about your timeline. How important is this transformation to you, and what's driving this desire for change right now?",
-        "Excellent insights! One more thing - what resources do you have available? Time per week, upcoming events, or support systems that could help accelerate your progress?"
-      ],
-      Raven: [
-        "Fascinating. Let me analyze this deeper. What specific situations trigger these feelings of awkwardness? Is it the initial approach, maintaining conversation, or something else entirely?",
-        "I see patterns emerging. Now, let's examine your current skill level. On a scale of 1-10, how would you rate your confidence in different social scenarios?",
-        "Intriguing data points. What learning style works best for you? Do you prefer structured practice, observational learning, or perhaps guided reflection?"
-      ],
-      Phoenix: [
-        "I hear your determination! Every master networker started exactly where you are. What past social victories can we build upon? Even small wins count.",
-        "That resilience mindset is your superpower! What obstacles have you already overcome in other areas of life? We can apply those same strengths here.",
-        "You're already transforming by being here! What kind of accountability and support would help you stay committed to this journey?"
-      ]
-    };
-    
-    const avatarResponses = responses[avatar];
-    const responseIndex = Math.min(messageCount - 2, avatarResponses.length - 1);
-    
-    return {
-      message: avatarResponses[Math.max(0, responseIndex)],
-      generatePlan: false
-    };
-  };
   
   const getSuggestedResponses = (): string[] => {
     const responses = {
@@ -380,7 +374,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
           {/* Plan Preview */}
           {currentStep === 'plan' && (
             <PlanPreview 
-              plan={mockPlan}
+              plan={generatedPlan || mockPlan}
               onEditPlan={handleEditPlan}
               onAcceptPlan={handleAcceptPlan}
               isGenerating={isGeneratingPlan}

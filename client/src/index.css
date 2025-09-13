@@ -325,4 +325,49 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Beautiful Purple Gradient Animations */
+  @keyframes gradient-xy {
+    0%, 100% {
+      background: linear-gradient(45deg, #8b5cf6, #a855f7, #3b82f6);
+      background-size: 400% 400%;
+    }
+    50% {
+      background: linear-gradient(45deg, #ec4899, #8b5cf6, #6366f1);
+      background-size: 400% 400%;
+    }
+  }
+  
+  @keyframes gradient-slow {
+    0%, 100% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.1);
+    }
+  }
+  
+  @keyframes gradient-fast {
+    0%, 100% {
+      transform: rotate(0deg) scale(1);
+    }
+    33% {
+      transform: rotate(120deg) scale(1.05);
+    }
+    66% {
+      transform: rotate(240deg) scale(0.95);
+    }
+  }
+  
+  .animate-gradient-xy {
+    animation: gradient-xy 8s ease infinite;
+  }
+  
+  .animate-gradient-slow {
+    animation: gradient-slow 12s ease-in-out infinite;
+  }
+  
+  .animate-gradient-fast {
+    animation: gradient-fast 6s ease-in-out infinite;
+  }
 }
