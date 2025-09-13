@@ -8,6 +8,7 @@ import BookAnimation from './BookAnimation';
 import AvatarSelection from './AvatarSelection';
 import ConversationFlow from './ConversationFlow';
 import PlanPreview from './PlanPreview';
+import PlanDisplay from './PlanDisplay';
 import type { Avatar, Message, Plan } from '@shared/schema';
 
 type FlowStep = 'intro' | 'avatar' | 'conversation' | 'plan' | 'complete';
@@ -246,7 +247,7 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       });
       return await response.json();
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log('Plan API Response:', response); // Debug log
       
       // Handle the API response format
@@ -258,6 +259,29 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
       }
       
       if (plan) {
+        // Save plan to Firestore under plans/{user.uid}/plan
+        try {
+          const userId = 'user123'; // Replace with actual user ID from auth
+          const response = await fetch('/api/save-plan', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: userId,
+              plan: plan,
+              avatar: selectedAvatar,
+              timestamp: new Date().toISOString()
+            })
+          });
+          
+          if (response.ok) {
+            console.log('Plan saved to Firestore successfully');
+          }
+        } catch (error) {
+          console.error('Error saving plan to Firestore:', error);
+        }
+        
         setGeneratedPlan(plan);
       } else {
         console.log('Using fallback mock plan');
@@ -334,9 +358,9 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     console.log('Plan accepted! Redirecting to main application...');
     setCurrentStep('complete');
     // Here you would typically save to Firestore and redirect
-    if (onClose) {
-      setTimeout(onClose, 2000);
-    }
+    // if (onClose) {
+    //   setTimeout(onClose, 2000);
+    // }
   };
   
   return (
@@ -446,27 +470,22 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
             />
           )}
           
-          {/* Completion */}
+          {/* Completion - Show Plan Display */}
           {currentStep === 'complete' && (
-            <div className="text-center space-y-8 min-h-[400px] flex flex-col justify-center">
-              <div className="w-20 h-20 mx-auto bg-green-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-3xl">✓</span>
-              </div>
-              
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold text-foreground">
+            <div className="min-h-[600px]">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-4">
+                  <span className="text-white text-2xl">✓</span>
+                </div>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
                   Your Journey Begins Now!
                 </h2>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                  Your personalized social skills plan has been saved. You'll be redirected to start your transformation.
+                <p className="text-muted-foreground">
+                  Your personalized 5-day social skills plan is ready
                 </p>
               </div>
               
-              <div className="flex space-x-1 justify-center">
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
+              <PlanDisplay userId="user123" /> {/* Replace with actual user ID */}
             </div>
           )}
         </div>

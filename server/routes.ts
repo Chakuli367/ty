@@ -207,13 +207,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Save plan to Firebase
   app.post('/api/save-plan', async (req, res) => {
     try {
-      const { userId, planHtml, avatar, goal } = req.body;
+      const { userId, plan, avatar, timestamp } = req.body;
       
-      await firestore.collection('Plans').doc(userId).set({
-        plan_html: planHtml,
-        generated_at: new Date(),
+      // Save to plans/{user.uid}/plan path
+      await firestore.collection('plans').doc(userId).collection('plan').add({
+        plan: plan,
         avatar: avatar,
-        goal: goal
+        generated_at: new Date(timestamp),
+        created_at: new Date()
       });
       
       res.json({ success: true });
@@ -239,6 +240,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         success: false, 
         error: 'Failed to fetch goals' 
+      });
+    }
+  });
+
+  // Get user plan from Firestore
+  app.get('/api/plan/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      // Fetch from plans/{user.uid}/plan
+      const planSnapshot = await firestore.collection('plans').doc(userId).collection('plan').orderBy('created_at', 'desc').limit(1).get();
+      
+      if (planSnapshot.empty) {
+        return res.status(404).json({ 
+          success: false, 
+          error: 'No plan found for user' 
+        });
+      }
+      
+      const planDoc = planSnapshot.docs[0];
+      const planData = planDoc.data();
+      
+      res.json({ 
+        success: true, 
+        data: {
+          id: planDoc.id,
+          ...planData
+        }
+      });
+    } catch (error) {
+      console.error('Plan fetch error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to fetch plan' 
       });
     }
   });
