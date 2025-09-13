@@ -148,24 +148,30 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     setCurrentStep('conversation');
   };
   
-  // Real GROQ conversation mutation
+  // External API conversation mutation
   const conversationMutation = useMutation({
     mutationFn: async ({ messages, avatar }: { messages: Message[], avatar: Avatar }) => {
-      const response = await apiRequest('POST', '/api/conversation', { messages, avatar });
+      const response = await fetch('https://one23-u2ck.onrender.com/ask-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages, avatar })
+      });
       return await response.json();
     },
     onSuccess: (response) => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.data.message,
+        content: response.message || response.data?.message || response.answer,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, aiMessage]);
       setIsLoading(false);
       
-      if (response.data.generatePlan) {
+      if (response.generatePlan || response.data?.generatePlan) {
         // Start plan generation
         setTimeout(() => {
           setCurrentStep('plan');
@@ -174,7 +180,8 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
         }, 2000);
       }
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('External API error:', error);
       setIsLoading(false);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -186,22 +193,30 @@ export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
     }
   });
 
-  // Real GROQ plan generation mutation
+  // External API plan generation mutation
   const planMutation = useMutation({
     mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/generate-plan', { 
-        messages, 
-        avatar: selectedAvatar,
-        goalText: messages.find(m => m.role === 'user')?.content || ''
+      const response = await fetch('https://one23-u2ck.onrender.com/ask-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          messages, 
+          avatar: selectedAvatar,
+          goalText: messages.find(m => m.role === 'user')?.content || '',
+          generatePlan: true
+        })
       });
       return await response.json();
     },
     onSuccess: (response) => {
       // Replace mockPlan with the real generated plan
-      setGeneratedPlan(response.data);
+      setGeneratedPlan(response.plan || response.data?.plan || response.data);
       setIsGeneratingPlan(false);
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Plan generation error:', error);
       setIsGeneratingPlan(false);
       // Keep the mock plan as fallback
     }
