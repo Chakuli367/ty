@@ -4,15 +4,16 @@
 
 /* LIGHT MODE */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  --button-outline: rgba(0, 0, 0, .10);
+  --badge-outline: rgba(0, 0, 0, .05);
 
   /* Automatic computation of border around primary / danger buttons */
-  --opaque-button-border-intensity: -8; /* In terms of percentages */
+  --opaque-button-border-intensity: -8;
+  /* In terms of percentages */
 
   /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0, 0, 0, .03);
+  --elevate-2: rgba(0, 0, 0, .08);
 
   --background: 0 0% 100%;
 
@@ -79,7 +80,8 @@
   --font-sans: Inter, sans-serif;
   --font-serif: 'Playfair Display', serif;
   --font-mono: Menlo, monospace;
-  --radius: .5rem; /* 8px */
+  --radius: .5rem;
+  /* 8px */
   --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.02);
   --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.03);
   --shadow-sm: 0px 2px 0px 0px hsl(0 0% 0% / 0.04), 0px 1px 2px -1px hsl(0 0% 0% / 0.05);
@@ -123,14 +125,15 @@
 }
 
 .dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
+  --button-outline: rgba(255, 255, 255, .10);
+  --badge-outline: rgba(255, 255, 255, .05);
 
-  --opaque-button-border-intensity: 9;  /* In terms of percentages */
+  --opaque-button-border-intensity: 9;
+  /* In terms of percentages */
 
   /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
+  --elevate-1: rgba(255, 255, 255, .04);
+  --elevate-2: rgba(255, 255, 255, .09);
 
   --background: 15 8% 12%;
 
@@ -328,45 +331,55 @@
 
   /* Beautiful Purple Gradient Animations */
   @keyframes gradient-xy {
-    0%, 100% {
+
+    0%,
+    100% {
       background: linear-gradient(45deg, #8b5cf6, #a855f7, #3b82f6);
       background-size: 400% 400%;
     }
+
     50% {
       background: linear-gradient(45deg, #ec4899, #8b5cf6, #6366f1);
       background-size: 400% 400%;
     }
   }
-  
+
   @keyframes gradient-slow {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: rotate(0deg) scale(1);
     }
+
     50% {
       transform: rotate(180deg) scale(1.1);
     }
   }
-  
+
   @keyframes gradient-fast {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: rotate(0deg) scale(1);
     }
+
     33% {
       transform: rotate(120deg) scale(1.05);
     }
+
     66% {
       transform: rotate(240deg) scale(0.95);
     }
   }
-  
+
   .animate-gradient-xy {
     animation: gradient-xy 8s ease infinite;
   }
-  
+
   .animate-gradient-slow {
     animation: gradient-slow 12s ease-in-out infinite;
   }
-  
+
   .animate-gradient-fast {
     animation: gradient-fast 6s ease-in-out infinite;
   }
