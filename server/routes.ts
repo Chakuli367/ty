@@ -23,6 +23,71 @@ const summaryRequestSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Real-time conversation endpoint
+  app.post('/api/conversation', async (req, res) => {
+    try {
+      const { messages, avatar } = req.body;
+      
+      // Store conversation in Firestore
+      const conversationRef = await firestore.collection('conversations').add({
+        messages: messages,
+        avatar: avatar,
+        timestamp: new Date()
+      });
+
+      // Generate AI response (replace with actual AI logic)
+      const lastUserMessage = messages[messages.length - 1];
+      let response = '';
+      let generatePlan = false;
+
+      // Simple response logic - replace with actual AI
+      if (messages.length <= 2) {
+        response = `I understand you want to work on "${lastUserMessage.content}". Tell me more about what specific situations challenge you the most.`;
+      } else if (messages.length <= 4) {
+        response = `That's helpful context. What would success look like for you in this area? What's your ideal outcome?`;
+      } else {
+        response = `Based on our conversation, I think I have enough information to create a personalized plan for you. Let me get started on that!`;
+        generatePlan = true;
+      }
+
+      // Update conversation in Firestore
+      await conversationRef.update({
+        ai_response: response,
+        generate_plan: generatePlan
+      });
+
+      res.json({ 
+        success: true, 
+        data: { 
+          message: response, 
+          generatePlan: generatePlan 
+        } 
+      });
+    } catch (error) {
+      console.error('Conversation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to process conversation' 
+      });
+    }
+  });
+
+  // Generate plan endpoint
+  app.post('/api/generate-plan', async (req, res) => {
+    try {
+      const { messages, avatar, goalText } = req.body;
+      
+      const plan = await externalAPI.generatePlan(goalText, [], avatar);
+      
+      res.json({ success: true, data: plan });
+    } catch (error) {
+      console.error('Plan generation error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: 'Failed to generate plan' 
+      });
+    }
+  });
   // Get questions for goal
   app.post('/ask-questions', async (req, res) => {
     try {
