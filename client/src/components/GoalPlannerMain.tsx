@@ -1,495 +1,556 @@
-import { useState, useEffect } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { X } from 'lucide-react';
-import BookAnimation from './BookAnimation';
-import AvatarSelection from './AvatarSelection';
-import ConversationFlow from './ConversationFlow';
-import PlanPreview from './PlanPreview';
-import PlanDisplay from './PlanDisplay';
-import type { Avatar, Message, Plan } from '@shared/schema';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import BookAnimation from "./BookAnimation";
+import type { Message, Plan } from "@shared/schema";
+import apiKeysData from "../apikeys.json";
+import { useNavigate } from "react-router-dom";
 
-type FlowStep = 'intro' | 'avatar' | 'conversation' | 'plan' | 'complete';
+type FlowStep =
+  | "intro"
+  | "questions"
+  | "reinforce"
+  | "friendGoals"
+  | "peopleSlider"
+  | "peopleDetails"
+  | "conversation"
+  | "complete";
+
+type Question = {
+  id: string;
+  text: string;
+  options: { text: string; reinforce: string }[];
+};
+
+// ---------------- QUIZ QUESTIONS (DETAILED & IMPROVED) ----------------
+const quizQuestions: Question[] = [
+  {
+    id: "q1",
+    text: "How often do you initiate conversations with people you don’t know?",
+    options: [
+      {
+        text: "Almost never 😅",
+        reinforce:
+          "Recognizing this is the first step! Small starts lead to big growth 🌱",
+      },
+      {
+        text: "Sometimes 🤔",
+        reinforce: "Great! Even occasional steps build confidence.",
+      },
+      {
+        text: "Often 🙂",
+        reinforce: "Awesome! You’re comfortable taking social initiative.",
+      },
+      {
+        text: "Always 😎",
+        reinforce: "Fantastic! You thrive in connecting with new people.",
+      },
+    ],
+  },
+  {
+    id: "q2",
+    text: "When you meet someone new, what details do you naturally notice or remember?",
+    options: [
+      {
+        text: "Just their name 😅",
+        reinforce: "Names are key! Let’s work on noticing deeper details too.",
+      },
+      {
+        text: "Name + appearance 🤔",
+        reinforce: "Good! Observing visual details helps you connect.",
+      },
+      {
+        text: "Name + interests/what they say 🙂",
+        reinforce: "Excellent! You notice what truly matters.",
+      },
+      {
+        text: "I remember a lot about them 😎",
+        reinforce: "Impressive! You’re naturally attentive and engaging.",
+      },
+    ],
+  },
+  {
+    id: "q3",
+    text: "Which social situations make you feel most uncomfortable?",
+    options: [
+      {
+        text: "Meeting strangers 😳",
+        reinforce:
+          "It’s normal! We’ll help you approach new people with confidence.",
+      },
+      {
+        text: "Large groups 🤔",
+        reinforce: "Small steps can make you feel at ease in crowds.",
+      },
+      {
+        text: "Work/Networking events 😅",
+        reinforce:
+          "We can transform these situations into opportunities for connection.",
+      },
+      {
+        text: "Most social settings 😓",
+        reinforce:
+          "No worries, we’ll start with manageable interactions first.",
+      },
+    ],
+  },
+  {
+    id: "q4",
+    text: "After meeting someone, how often do you maintain contact or follow up?",
+    options: [
+      {
+        text: "Never 😅",
+        reinforce: "Follow-ups are a skill! We’ll build that habit together.",
+      },
+      {
+        text: "Sometimes 🤔",
+        reinforce: "Good! Consistency will strengthen your connections.",
+      },
+      {
+        text: "Often 🙂",
+        reinforce: "Excellent! Regular follow-ups show care and commitment.",
+      },
+      {
+        text: "Always 😎",
+        reinforce: "Amazing! You naturally maintain strong connections.",
+      },
+    ],
+  },
+  {
+    id: "q5",
+    text: "What is the most challenging part of socializing for you?",
+    options: [
+      {
+        text: "Not knowing what to say 😓",
+        reinforce: "Conversation starters will help you feel more prepared.",
+      },
+      {
+        text: "Feeling awkward 😳",
+        reinforce:
+          "Awkwardness is normal; practice makes interactions smoother.",
+      },
+      {
+        text: "Fear of rejection 😢",
+        reinforce: "We’ll build confidence and resilience step by step.",
+      },
+      {
+        text: "Keeping conversations going 🤔",
+        reinforce:
+          "You’ll learn natural ways to maintain engaging conversations.",
+      },
+    ],
+  },
+  {
+    id: "q6",
+    text: "Why do you want to improve your social skills?",
+    options: [
+      {
+        text: "Make more friends 🙂",
+        reinforce: "Awesome! Expanding your social circle is empowering.",
+      },
+      {
+        text: "Strengthen current friendships 💛",
+        reinforce: "Perfect! Deep, meaningful connections matter.",
+      },
+      {
+        text: "Career / Networking 🚀",
+        reinforce: "Great! Social skills can open professional opportunities.",
+      },
+      {
+        text: "Personal growth 🌱",
+        reinforce:
+          "Amazing! Developing social skills is a lifelong investment.",
+      },
+    ],
+  },
+  {
+    id: "q7",
+    text: "How do you think others perceive you in social settings?",
+    options: [
+      {
+        text: "Shy / quiet 😅",
+        reinforce:
+          "Understanding perceptions helps you adjust interactions wisely.",
+      },
+      {
+        text: "Friendly but awkward 🤔",
+        reinforce:
+          "Small adjustments can boost both confidence and likability.",
+      },
+      {
+        text: "Confident 🙂",
+        reinforce: "Great! Keep building on your positive impression.",
+      },
+      {
+        text: "Outgoing / likable 😎",
+        reinforce: "Fantastic! You naturally make others feel comfortable.",
+      },
+    ],
+  },
+  {
+    id: "q8",
+    text: "How do you usually feel after social interactions?",
+    options: [
+      {
+        text: "Drained or anxious 😓",
+        reinforce:
+          "We’ll explore ways to make socializing energizing rather than exhausting.",
+      },
+      {
+        text: "Neutral 🤔",
+        reinforce: "Good! Awareness of your energy can guide how you interact.",
+      },
+      {
+        text: "Happy or satisfied 🙂",
+        reinforce: "Excellent! You already enjoy connecting with others.",
+      },
+      {
+        text: "Excited and energized 😎",
+        reinforce: "Amazing! Social interactions are a strength for you.",
+      },
+    ],
+  },
+  {
+    id: "q9",
+    text: "When conflicts or misunderstandings occur, how do you typically respond?",
+    options: [
+      {
+        text: "Avoid or stay quiet 😅",
+        reinforce: "We’ll work on expressing yourself calmly and confidently.",
+      },
+      {
+        text: "Feel awkward but try to clarify 🤔",
+        reinforce:
+          "Good! Learning structured approaches can help resolve conflicts smoothly.",
+      },
+      {
+        text: "Address directly and politely 🙂",
+        reinforce: "Excellent! You manage misunderstandings maturely.",
+      },
+      {
+        text: "Comfortable handling and resolving 😎",
+        reinforce:
+          "Fantastic! You have strong interpersonal problem-solving skills.",
+      },
+    ],
+  },
+  {
+    id: "q10",
+    text: "How comfortable are you giving and receiving compliments?",
+    options: [
+      {
+        text: "Very uncomfortable 😅",
+        reinforce:
+          "Complimenting is a social skill; we’ll practice it together.",
+      },
+      {
+        text: "Somewhat comfortable 🤔",
+        reinforce: "Good! Small steps make this natural over time.",
+      },
+      {
+        text: "Comfortable 🙂",
+        reinforce: "Excellent! You can express appreciation easily.",
+      },
+      {
+        text: "Very confident 😎",
+        reinforce:
+          "Amazing! You strengthen relationships with genuine appreciation.",
+      },
+    ],
+  },
+];
 
 interface GoalPlannerMainProps {
   onClose?: () => void;
+  className?: string;
 }
 
-// todo: remove mock functionality
-const mockPlan: Plan = {
-  id: '1',
-  title: 'Master Networking Confidence',
-  description: 'A personalized plan based on your conversation with Skyler to build genuine networking skills through practical, proven techniques.',
-  totalDuration: 42,
-  feasibilityScore: 88,
-  steps: [
-    {
-      id: '1',
-      title: 'Foundation: Understanding Your Communication Style',
-      description: 'Discover your natural communication strengths and identify areas for growth. Learn to read social cues and practice active listening in everyday interactions.',
-      estimatedDays: 7,
-      difficulty: 'easy',
-      completed: false
-    },
-    {
-      id: '2',
-      title: 'Conversation Starters & Icebreakers',
-      description: 'Master 5 natural conversation starters specifically for professional events. Practice in low-pressure environments like coffee shops.',
-      estimatedDays: 10,
-      difficulty: 'easy',
-      completed: false
-    },
-    {
-      id: '3',
-      title: 'Building Rapport Through Authentic Interest',
-      description: 'Learn Carnegie\'s principles for showing genuine interest in others. Practice asking thoughtful follow-up questions and finding common ground.',
-      estimatedDays: 10,
-      difficulty: 'medium',
-      completed: false
-    },
-    {
-      id: '4',
-      title: 'Professional Event Navigation',
-      description: 'Attend 2-3 networking events with specific goals. Practice working the room effectively and positioning yourself as a valuable connection.',
-      estimatedDays: 10,
-      difficulty: 'medium',
-      completed: false
-    },
-    {
-      id: '5',
-      title: 'Follow-up & Relationship Building',
-      description: 'Master the follow-up process that most people skip. Create a system for maintaining professional relationships and adding value to your network.',
-      estimatedDays: 5,
-      difficulty: 'hard',
-      completed: false
-    }
-  ]
-};
-
-export default function GoalPlannerMain({ onClose }: GoalPlannerMainProps) {
-  const [currentStep, setCurrentStep] = useState<FlowStep>('intro');
-  const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null);
+export default function GoalPlannerMain({
+  onClose,
+  className,
+}: GoalPlannerMainProps) {
+  const [currentStep, setCurrentStep] = useState<FlowStep>("intro");
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [reinforcement, setReinforcement] = useState<string | null>(null);
+  const [friendGoal, setFriendGoal] = useState(0);
+  const [numContacts, setNumContacts] = useState(0);
+  const [currentContactIndex, setCurrentContactIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+  const [contacts, setContacts] = useState<
+    { name: string; relation: string }[]
+  >([]);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showTrailerText, setShowTrailerText] = useState(true);
-  const [trailerText, setTrailerText] = useState('');
-  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [generatedPlan, setGeneratedPlan] = useState<Plan | null>(null);
-  
-  const fullTrailerText = "TRANSFORM YOUR SOCIAL SKILLS WITH AI COACHING";
-  
-  // Typing animation for trailer text
-  useEffect(() => {
-    if (currentStep === 'intro' && showTrailerText) {
-      let index = 0;
-      const timer = setInterval(() => {
-        if (index <= fullTrailerText.length) {
-          setTrailerText(fullTrailerText.slice(0, index));
-          index++;
-        } else {
-          clearInterval(timer);
-          // Hide trailer text after 3 seconds
-          setTimeout(() => {
-            setShowTrailerText(false);
-          }, 3000);
-        }
-      }, 100);
-      
-      return () => clearInterval(timer);
-    }
-  }, [currentStep, showTrailerText]);
-  
-  // Initialize conversation when avatar is selected
-  useEffect(() => {
-    if (currentStep === 'conversation' && selectedAvatar && messages.length === 0) {
-      const welcomeMessage: Message = {
-        id: '1',
-        role: 'assistant',
-        content: getWelcomeMessage(selectedAvatar),
-        timestamp: new Date()
-      };
-      setMessages([welcomeMessage]);
-    }
-  }, [currentStep, selectedAvatar, messages.length]);
-  
-  const getWelcomeMessage = (avatar: Avatar): string => {
-    const messages = {
-      Skyler: "Hi! I'm Skyler, your visionary guide. I see the big picture and I'm here to help you transform your social skills goals into a clear, inspiring plan. Let's start by understanding your vision - what specific social skill would you like to master?",
-      Raven: "Hello! I'm Raven, your analytical companion. I believe in understanding the 'why' behind every goal before creating the 'how'. Let's dive deep into your social skills aspirations. What specific challenge are you facing that brought you here today?",
-      Phoenix: "Hey there! I'm Phoenix, your resilient coach. I've learned that every setback is a setup for a comeback. I'm here to help you rise to your social skills potential. What's the social challenge you're ready to transform?"
-    };
-    return messages[avatar];
-  };
-  
-  const getCurrentProgress = (): number => {
-    switch (currentStep) {
-      case 'intro': return 0;
-      case 'avatar': return 20;
-      case 'conversation': return 40 + (messages.length * 5); // Dynamic based on conversation depth
-      case 'plan': return 80;
-      case 'complete': return 100;
-      default: return 0;
-    }
-  };
-  
-  const getCurrentStepDescription = (): string => {
-    switch (currentStep) {
-      case 'intro': return 'Welcome to your social skills journey';
-      case 'avatar': return 'Choosing your personal guide';
-      case 'conversation': return 'Understanding your goals and creating your plan';
-      case 'plan': return 'Reviewing your personalized action plan';
-      case 'complete': return 'Ready to start your transformation';
-      default: return 'Getting started';
-    }
-  };
-  
-  const handleAvatarNext = () => {
-    setCurrentStep('conversation');
-  };
-  
-  // Chat API conversation mutation
-  const conversationMutation = useMutation({
-    mutationFn: async ({ messages, avatar }: { messages: Message[], avatar: Avatar }) => {
-      // Extract the latest user message
-      const userMessages = messages.filter(m => m.role === 'user');
-      const latestUserMessage = userMessages[userMessages.length - 1];
-      const messageContent = latestUserMessage?.content || '';
-      
-      // Extract goal from the first user message or use a default
-      const firstUserMessage = userMessages[0];
-      const goalName = firstUserMessage?.content || 'social skills improvement';
-      
-      const response = await fetch('https://one23-u2ck.onrender.com/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          user_id: 'anonymous_user', // You can replace this with actual user ID if available
-          message: messageContent,
-          goal_name: goalName
-        })
-      });
-      return await response.json();
-    },
-    onSuccess: (response) => {
-      console.log('API Response:', response); // Debug log
-      
-      // Handle the new API response format - returns { "reply": "..." }
-      let messageContent = '';
-      let shouldGeneratePlan = false;
-      
-      if (response?.reply) {
-        messageContent = response.reply;
-        // Check if this looks like we have enough info to generate a plan
-        shouldGeneratePlan = messages.length >= 6; // After several exchanges, suggest plan generation
-      } else if (response?.error) {
-        messageContent = "I had trouble processing that. Could you tell me more about your goals?";
-      } else {
-        messageContent = "I understand. Could you tell me more about what you'd like to achieve?";
-      }
-      
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: messageContent,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiMessage]);
-      setIsLoading(false);
-      
-      if (shouldGeneratePlan) {
-        // Start plan generation
-        setTimeout(() => {
-          setCurrentStep('plan');
-          setIsGeneratingPlan(true);
-          planMutation.mutate();
-        }, 2000);
-      }
-    },
-    onError: (error) => {
-      console.error('External API error:', error);
-      setIsLoading(false);
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: "I'm having trouble connecting to my AI brain right now. Let me try a different approach - what specific social skill challenge would you like to work on?",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    }
-  });
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
-  // External API plan generation mutation
-  const planMutation = useMutation({
-    mutationFn: async () => {
-      // Extract user answers from the conversation messages
-      const userAnswers = messages
-        .filter(m => m.role === 'user')
-        .map(m => m.content);
-      
-      // Get the goal name from the first user message or use a default
-      const goalName = userAnswers[0] || 'social skills improvement';
-      
-      const response = await fetch('https://one23-u2ck.onrender.com/final-plan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          goal_name: goalName,
-          user_answers: userAnswers,
-          avatar: selectedAvatar
-        })
-      });
-      return await response.json();
-    },
-    onSuccess: async (response) => {
-      console.log('Plan API Response:', response); // Debug log
-      
-      // Handle the API response format
-      let plan = null;
-      if (response?.success && response?.plan) {
-        plan = response.plan;
-      } else if (response?.plan) {
-        plan = response.plan;
-      }
-      
-      if (plan) {
-        // Save plan to Firestore under plans/{user.uid}/plan
-        try {
-          const userId = 'user123'; // Replace with actual user ID from auth
-          const response = await fetch('https://one23-u2ck.onrender.com/api/save-plan', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              userId: userId,
-              plan: plan,
-              avatar: selectedAvatar,
-              timestamp: new Date().toISOString()
-            })
-          });
-          
-          if (response.ok) {
-            console.log('Plan saved to Firestore successfully');
-          }
-        } catch (error) {
-          console.error('Error saving plan to Firestore:', error);
-        }
-        
-        setGeneratedPlan(plan);
-      } else {
-        console.log('Using fallback mock plan');
-        // Use mock plan as fallback
-      }
-      setIsGeneratingPlan(false);
-    },
-    onError: (error) => {
-      console.error('Plan generation error:', error);
-      setIsGeneratingPlan(false);
-      // Keep the mock plan as fallback
-    }
-  });
+  const apiKeys = apiKeysData.keys;
+  const navigate = useNavigate();
 
-  const handleSendMessage = (content: string) => {
-    if (!selectedAvatar) return;
-    
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content,
-      timestamp: new Date()
-    };
-    
-    setMessages(prev => [...prev, userMessage]);
-    setIsLoading(true);
-    
-    // Call real GROQ API
-    conversationMutation.mutate({
-      messages: [...messages, userMessage],
-      avatar: selectedAvatar
-    });
+  const handleAnswer = (option: { text: string; reinforce: string }) => {
+    const question = quizQuestions[currentQuestionIndex];
+    setQuizAnswers({ ...quizAnswers, [question.id]: option.text });
+    setReinforcement(option.reinforce);
+
+    setTimeout(() => {
+      setReinforcement(null);
+      if (currentQuestionIndex + 1 < quizQuestions.length) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        setCurrentStep("friendGoals");
+      }
+    }, 1500);
   };
-  
-  
-  const getSuggestedResponses = (): string[] => {
-    const responses = {
-      Skyler: [
-        "Leading confident conversations",
-        "Building my professional network",
-        "Speaking up in group settings",
-        "Making lasting first impressions"
-      ],
-      Raven: [
-        "The initial approach feels hardest",
-        "Keeping conversations flowing naturally", 
-        "Reading social cues accurately",
-        "Managing networking anxiety"
-      ],
-      Phoenix: [
-        "I've overcome shyness before",
-        "Small talk feels unnatural to me",
-        "I want to add genuine value",
-        "Building confidence step by step"
-      ]
-    };
-    
-    return selectedAvatar ? responses[selectedAvatar] : [];
+
+  const handleFriendGoalNext = () => {
+    setCurrentStep("peopleSlider");
   };
-  
-  const handleEditPlan = () => {
-    // Return to conversation to refine
-    setCurrentStep('conversation');
-    const refinementMessage: Message = {
-      id: Date.now().toString(),
-      role: 'assistant',
-      content: "Great choice! Let's refine your plan. What would you like to adjust? Perhaps the timeline, difficulty level, or specific focus areas?",
-      timestamp: new Date()
-    };
-    setMessages(prev => [...prev, refinementMessage]);
+
+  const handlePeopleNext = () => {
+    if (numContacts === 0) setCurrentStep("conversation");
+    else setCurrentStep("peopleDetails");
   };
-  
-  const handleAcceptPlan = () => {
-    console.log('Plan accepted! Redirecting to main application...');
-    setCurrentStep('complete');
-    // Here you would typically save to Firestore and redirect
-    // if (onClose) {
-    //   setTimeout(onClose, 2000);
-    // }
+
+  const handleContactSubmit = (name: string, relation: string) => {
+    setContacts([...contacts, { name, relation }]);
+    if (currentContactIndex + 1 < numContacts) {
+      setCurrentContactIndex(currentContactIndex + 1);
+    } else {
+      setCurrentStep("conversation");
+    }
   };
-  
+
+  const handleGeneratePlan = async (day: number = 1) => {
+    setIsGeneratingPlan(true);
+    try {
+      const payload = {
+        user_id: "user_demo",
+        goal_name: quizAnswers["q2"] || "social skills",
+        user_answers: Object.values(quizAnswers),
+      };
+      const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
+
+      const resp = await fetch(
+        `https://one23-u2ck.onrender.com/final-plan-day${day}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      const raw = await resp.text();
+      const data = JSON.parse(raw);
+      if (!data || !data.plan) throw new Error("No plan returned");
+      setGeneratedPlan(data.plan);
+      setCurrentStep("complete");
+    } catch (err) {
+      alert("Failed to generate plan. Try again later.");
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  const progressPercent =
+    ((currentQuestionIndex + 1) / quizQuestions.length) * 100;
+
   return (
-    <div 
-      className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-      data-testid="goal-planner-overlay"
+    <div
+      className={`w-full h-full min-h-screen p-6 sm:p-8 text-white flex flex-col items-center justify-start overflow-auto ${className}`}
     >
-      {/* Background Animation */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-        {/* Floating orbs animation */}
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-accent/10 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '1s' }} />
-      </div>
-      
-      {/* Main Container */}
-      <Card className="relative w-full max-w-6xl max-h-[95vh] overflow-hidden">
-        {/* Close Button */}
-        {onClose && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 hover-elevate"
-            data-testid="button-close"
+      {onClose && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-transparent hover:bg-white/10 transition"
+        >
+          X
+        </Button>
+      )}
+
+      <AnimatePresence mode="wait">
+        {reinforcement ? (
+          <motion.div
+            key="reinforce"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1.05 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center text-lg sm:text-xl font-semibold text-yellow-400 animate-pulse mt-20"
           >
-            <X className="w-4 h-4" />
-          </Button>
-        )}
-        
-        {/* Content */}
-        <div className="p-8 overflow-auto max-h-[95vh]">
-          {/* Intro with Book & Trailer */}
-          {currentStep === 'intro' && (
-            <div className="text-center space-y-8 min-h-[600px] flex flex-col justify-center">
-              {showTrailerText ? (
-                <div className="space-y-8">
-                  <h1 
-                    className="text-5xl font-black text-foreground tracking-wider leading-tight"
-                    style={{
-                      textShadow: '0 0 30px rgba(var(--primary), 0.5)'
-                    }}
-                    data-testid="trailer-text"
-                  >
-                    {trailerText}
-                    <span className="animate-pulse">|</span>
-                  </h1>
-                </div>
-              ) : (
-                <div className="space-y-12 animate-in fade-in duration-1000">
-                  <BookAnimation />
-                  
-                  <div className="space-y-6">
-                    <h2 className="text-3xl font-bold text-foreground">
-                      Ready to Transform Your Social Skills?
-                    </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                      Using proven principles from "How to Win Friends and Influence People", 
-                      our AI will create a personalized plan to help you achieve your social goals.
-                    </p>
-                    
-                    <Button 
-                      size="lg" 
-                      onClick={() => setCurrentStep('avatar')}
-                      className="text-lg px-8 py-6 font-semibold"
-                      data-testid="button-get-started"
-                    >
-                      Get Started
-                    </Button>
+            {reinforcement}
+          </motion.div>
+        ) : (
+          <motion.div
+            key={currentStep + currentQuestionIndex + currentContactIndex}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6 }}
+            className="w-full max-w-3xl"
+          >
+            {currentStep === "intro" && (
+              <div className="text-center space-y-6 mt-20">
+                <BookAnimation />
+                <h1 className="text-4xl font-bold text-white">
+                  Welcome to GoalGrid
+                </h1>
+                <p className="text-lg text-gray-300">
+                  Let’s build your personalized social skills journey.
+                </p>
+                <Button
+                  onClick={() => {
+                    setCurrentStep("questions");
+                    setCurrentQuestionIndex(0);
+                  }}
+                >
+                  Get Started
+                </Button>
+              </div>
+            )}
+
+            {currentStep === "questions" &&
+              quizQuestions[currentQuestionIndex] && (
+                <div className="space-y-6 text-center mt-12">
+                  <div className="relative h-5 w-full bg-white/10 rounded-full overflow-hidden">
+                    <motion.div
+                      className="absolute top-0 left-0 h-full bg-green-400 rounded-full"
+                      animate={{ width: `${progressPercent}%` }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  </div>
+                  <h2 className="text-2xl font-semibold mt-4">
+                    {quizQuestions[currentQuestionIndex].text}
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                    {quizQuestions[currentQuestionIndex].options.map((opt) => (
+                      <motion.div
+                        key={opt.text}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="p-4 bg-white/10 rounded-xl cursor-pointer hover:bg-white/20 transition text-white font-semibold"
+                        onClick={() => handleAnswer(opt)}
+                      >
+                        {opt.text}
+                      </motion.div>
+                    ))}
                   </div>
                 </div>
               )}
-            </div>
-          )}
-          
-          {/* Avatar Selection */}
-          {currentStep === 'avatar' && (
-            <AvatarSelection 
-              selectedAvatar={selectedAvatar}
-              onAvatarSelect={setSelectedAvatar}
-              onNext={handleAvatarNext}
-            />
-          )}
-          
-          {/* Conversation Flow */}
-          {currentStep === 'conversation' && selectedAvatar && (
-            <div className="min-h-[700px]">
-              <ConversationFlow 
-                avatar={selectedAvatar}
-                messages={messages}
-                onSendMessage={handleSendMessage}
-                isLoading={isLoading}
-                suggestedResponses={messages.length <= 2 ? getSuggestedResponses() : []}
-                currentStep={getCurrentStepDescription()}
-                progress={getCurrentProgress()}
-              />
-            </div>
-          )}
-          
-          {/* Plan Preview */}
-          {currentStep === 'plan' && (
-            <PlanPreview 
-              plan={generatedPlan || mockPlan}
-              onEditPlan={handleEditPlan}
-              onAcceptPlan={handleAcceptPlan}
-              isGenerating={isGeneratingPlan}
-            />
-          )}
-          
-          {/* Completion - Show Plan Display */}
-          {currentStep === 'complete' && (
-            <div className="min-h-[600px]">
-              <div className="text-center mb-8">
-                <div className="w-16 h-16 mx-auto bg-green-500 rounded-full flex items-center justify-center mb-4">
-                  <span className="text-white text-2xl">✓</span>
-                </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">
-                  Your Journey Begins Now!
+
+            {currentStep === "friendGoals" && (
+              <div className="space-y-6 text-center mt-12">
+                <h2 className="text-2xl font-semibold">
+                  How many friends do you want us to help you make?
                 </h2>
-                <p className="text-muted-foreground">
-                  Your personalized 5-day social skills plan is ready
-                </p>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value={friendGoal}
+                  onChange={(e) => setFriendGoal(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="font-semibold">{friendGoal} people</p>
+                <Button
+                  disabled={friendGoal === 0}
+                  onClick={handleFriendGoalNext}
+                >
+                  Next
+                </Button>
               </div>
-              
-              <PlanDisplay userId="user123" /> {/* Replace with actual user ID */}
-            </div>
-          )}
-        </div>
-      </Card>
+            )}
+
+            {currentStep === "peopleSlider" && (
+              <div className="space-y-6 text-center mt-12">
+                <h2 className="text-2xl font-semibold">
+                  How many people do you currently interact with whom you
+                  consider to be a part of your life?
+                </h2>
+                <input
+                  type="range"
+                  min="0"
+                  max="10"
+                  value={numContacts}
+                  onChange={(e) => setNumContacts(Number(e.target.value))}
+                  className="w-full"
+                />
+                <p className="font-semibold">{numContacts} people</p>
+                <Button disabled={numContacts === 0} onClick={handlePeopleNext}>
+                  Next
+                </Button>
+              </div>
+            )}
+
+            {currentStep === "peopleDetails" && (
+              <div className="space-y-6 text-center mt-12">
+                <h2 className="text-2xl font-semibold">
+                  Tell me about person {currentContactIndex + 1}
+                </h2>
+                <input
+                  type="text"
+                  placeholder="Their name"
+                  className="border rounded p-2 w-full bg-white/5"
+                  onChange={(e) =>
+                    (contacts[currentContactIndex] = {
+                      ...contacts[currentContactIndex],
+                      name: e.target.value,
+                    })
+                  }
+                />
+                <textarea
+                  placeholder="How do you know them?"
+                  className="border rounded p-2 w-full bg-white/5"
+                  onChange={(e) =>
+                    (contacts[currentContactIndex] = {
+                      ...contacts[currentContactIndex],
+                      relation: e.target.value,
+                    })
+                  }
+                />
+                <Button
+                  onClick={() =>
+                    handleContactSubmit(
+                      contacts[currentContactIndex]?.name || "",
+                      contacts[currentContactIndex]?.relation || "",
+                    )
+                  }
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+
+            {currentStep === "conversation" && (
+              <div className="text-center mt-20">
+                <h2 className="text-2xl font-semibold mb-6">
+                  Ready to chat with your AI guide?
+                </h2>
+                <Button
+                  onClick={() =>
+                    navigate(`/conversation`, {
+                      state: { messages, quizAnswers, contacts, friendGoal },
+                    })
+                  }
+                  className="px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold"
+                >
+                  Start Conversation
+                </Button>
+              </div>
+            )}
+
+            {currentStep === "complete" && (
+              <div className="text-center space-y-6 mt-12">
+                <h2 className="text-3xl font-bold">Your Journey Begins Now!</h2>
+                <PlanDisplay plan={generatedPlan || null} userId="demoUserId" />
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
