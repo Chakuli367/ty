@@ -84,27 +84,39 @@ export default function ConversationFlow({
 
   // Generate plan for a specific day
   const handleGeneratePlan = async () => {
-    console.log("🚀 Starting full 5-day plan generation...");
-    setIsGeneratingPlan(true);
+  console.log("🚀 Starting full 5-day plan generation...");
+  setIsGeneratingPlan(true);
 
-    try {
-      const userMessages = messages.filter((m) => m.role === "user");
-      const userAnswers = Object.values(answers);
-      const goalName =
-        userMessages[0]?.content || userAnswers[0] || "social skills";
+  try {
+    const userMessages = messages.filter((m) => m.role === "user");
+    const userAnswers = Object.values(answers);
+    const goalName =
+      userMessages[0]?.content || userAnswers[0] || "social skills";
 
-      for (let day = 1; day <= 5; day++) {
-        console.log(`🔹 Generating plan for Day ${day}...`);
+    const MAX_RETRIES = 5; // max retries per day
+    const results: { day: number; success: boolean }[] = [];
+
+    for (let day = 1; day <= 5; day++) {
+      let daySuccess = false;
+      let retries = 0;
+
+      // Notify user about current day's generation
+      const startMessage: Message = {
+        id: (Date.now() + day * 10).toString(),
+        role: "assistant",
+        content: `⚡ Generating plan for Day ${day}...`,
+      };
+      setMessages((prev) => [...prev, startMessage]);
+
+      while (!daySuccess && retries < MAX_RETRIES) {
         const apiKey = apiKeys[Math.floor(Math.random() * apiKeys.length)];
-        console.log("🔑 Using API key:", apiKey);
+        console.log(`🔹 Day ${day} attempt ${retries + 1} using API key:`, apiKey);
 
         const payload = {
           user_id: "user_demo",
           goal_name: goalName,
           user_answers: userAnswers,
         };
-
-        console.log("📦 Payload:", payload);
 
         try {
           const resp = await fetch(
@@ -116,21 +128,13 @@ export default function ConversationFlow({
                 Authorization: `Bearer ${apiKey}`,
               },
               body: JSON.stringify(payload),
-            },
-          );
-
-          console.log(
-            `🌐 Response status for Day ${day}:`,
-            resp.status,
-            resp.statusText,
+            }
           );
 
           const data = await resp.json();
-          console.log(`✅ Response data for Day ${day}:`, data);
-
           if (!data.plan) throw new Error("No plan returned from server");
 
-          // Save each day's plan to Firestore
+          // Save to Firestore
           const userPlanRef = doc(firestore, "plans", `user_day_${day}`);
           await setDoc(userPlanRef, {
             plan: data.plan,
@@ -139,39 +143,63 @@ export default function ConversationFlow({
             created_at: serverTimestamp(),
           });
 
-          // Add message to chat after each day
-          const dayMessage: Message = {
-            id: (Date.now() + day).toString(),
+          // Notify user success
+          const successMessage: Message = {
+            id: (Date.now() + day * 100).toString(),
             role: "assistant",
-            content: `✅ Plan for Day ${day} created.`,
+            content: `✅ Plan for Day ${day} created successfully.`,
           };
-          setMessages((prev) => [...prev, dayMessage]);
+          setMessages((prev) => [...prev, successMessage]);
+
+          daySuccess = true;
+          results.push({ day, success: true });
         } catch (err) {
-          console.error(`🔥 Error generating plan for Day ${day}:`, err);
-          const errorMessage: Message = {
-            id: (Date.now() + day + 100).toString(),
+          retries++;
+          console.error(`🔥 Error generating plan for Day ${day} (Attempt ${retries}):`, err);
+
+          const retryMessage: Message = {
+            id: (Date.now() + day * 200 + retries).toString(),
             role: "assistant",
-            content: `⚠️ Failed to generate plan for Day ${day}.`,
+            content: `⚠️ Failed to generate plan for Day ${day}. Retrying... (${retries}/${MAX_RETRIES})`,
           };
-          setMessages((prev) => [...prev, errorMessage]);
+          setMessages((prev) => [...prev, retryMessage]);
+
+          await new Promise((res) => setTimeout(res, 1000)); // small delay before retry
         }
       }
 
-      // After all 5 days
-      const finalMessage: Message = {
-        id: (Date.now() + 1000).toString(),
-        role: "assistant",
-        content: "🎉 Your entire 5-day plan is created!",
-      };
-      setMessages((prev) => [...prev, finalMessage]);
-
-      console.log("⏹️ Full 5-day plan generation finished.");
-    } catch (error) {
-      console.error("🔥 handleGeneratePlan error:", error);
-    } finally {
-      setIsGeneratingPlan(false);
+      if (!daySuccess) {
+        const failMessage: Message = {
+          id: (Date.now() + day * 300).toString(),
+          role: "assistant",
+          content: `❌ Could not generate plan for Day ${day} after ${MAX_RETRIES} attempts.`,
+        };
+        setMessages((prev) => [...prev, failMessage]);
+        results.push({ day, success: false });
+      }
     }
-  };
+
+    // After all 5 days → summary
+    const summaryMessage: Message = {
+      id: Date.now().toString(),
+      role: "assistant",
+      content: `🎉 5-day plan generation complete!\n` +
+        results
+          .map((r) =>
+            r.success ? `✅ Day ${r.day}` : `❌ Day ${r.day} failed`
+          )
+          .join("\n"),
+    };
+    setMessages((prev) => [...prev, summaryMessage]);
+
+    console.log("⏹️ Full 5-day plan generation finished.");
+  } catch (error) {
+    console.error("🔥 handleGeneratePlan error:", error);
+  } finally {
+    setIsGeneratingPlan(false);
+  }
+};
+
 
   // ---------------- SEND MESSAGE ----------------
   const handleSend = () => {
